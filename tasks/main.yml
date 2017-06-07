@@ -1,0 +1,96 @@
+---
+- name: Create user {{ django_user }}
+  user:
+    name: "{{ django_user }}"
+    system: yes
+    home: /var/opt/{{ django_project }}
+    createhome: no
+    shell: /bin/bash
+
+- name: Install git
+  apt: name=git
+
+- name: Install {{ django_project }}
+  git:
+    repo: "{{ django_project_repository }}"
+    dest: /opt/{{ django_project }}
+    version: production
+  notify:
+    - Compile {{ django_project }}
+    - Collect static files for {{ django_project }}
+    - Migrate {{ django_project }}
+
+- name: Install virtualenv
+  apt: name=virtualenv
+
+- name: Install {{ django_project }} prerequisites
+  pip:
+    requirements: /opt/{{ django_project }}/requirements.txt
+    virtualenv: /opt/{{ django_project }}/venv
+    virtualenv_python: "{{ django_project_python }}"
+    virtualenv_site_packages: "{{ django_project_site_packages }}"
+
+- name: Create data directory /var/opt/{{ django_project }}
+  file:
+    path: /var/opt/{{ django_project }}
+    state: directory
+    owner: "{{ django_user }}"
+
+- name: Create log directory /var/log/{{ django_project }}
+  file:
+    path: /var/log/{{ django_project }}
+    state: directory
+    owner: "{{ django_user }}"
+
+- name: Create config directory /etc/opt/{{ django_project }}
+  file:
+    path: /etc/opt/{{ django_project }}
+    state: directory
+    group: "{{ django_user }}"
+    mode: 0750
+
+- name: Configure {{ django_project }}
+  template:
+    src: settings.py.j2
+    dest: /etc/opt/{{ django_project }}/settings.py
+  notify:
+    - Compile {{ django_project }}
+    - Collect static files for {{ django_project }}
+    - Migrate {{ django_project }}
+
+- name: Install nginx
+  apt: name=nginx-light
+
+- name: Configure nginx for {{ django_project }}
+  template:
+    src: nginx.j2
+    dest: /etc/nginx/sites-available/{{ django_domain }}
+  notify:
+    - Reload nginx for {{ django_project }}
+
+- name: Enable nginx for {{ django_project }}
+  file:
+    state: link
+    src: /etc/nginx/sites-available/{{ django_domain }}
+    dest: /etc/nginx/sites-enabled/{{ django_domain }}
+  notify:
+    - Reload nginx for {{ django_project }}
+
+- name: Configure {{ django_project }} service
+  template:
+    src: systemd.j2
+    dest: /etc/systemd/system/{{ django_project }}.service
+  notify:
+    - Restart {{ django_project }}
+
+- name: Install gunicorn
+  pip:
+    name: gunicorn
+    virtualenv: /opt/{{ django_project }}/venv
+    virtualenv_python: "{{ django_project_python }}"
+    virtualenv_site_packages: "{{ django_project_site_packages }}"
+  notify:
+    - Restart {{ django_project }}
+
+- name: Enable {{ django_project }} service
+  systemd: name={{ django_project }} enabled=yes state=started

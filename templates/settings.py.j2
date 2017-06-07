@@ -1,0 +1,15 @@
+from {{ django_project }}.settings import *
+
+DEBUG = False
+ALLOWED_HOSTS = ['{{ django_domain }}']
+SECRET_KEY = '{{ django_secret_key }}'
+DATABASES = {
+   'default': {
+       'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': '/var/opt/{{ django_project }}/{{ django_project }}.db',
+   }
+}
+STATIC_ROOT = '/var/cache/{{ django_project }}/static/'
+STATIC_URL = '/static/'
+MEDIA_ROOT = '/var/opt/{{ django_project }}/media/'
+MEDIA_URL = '/media/'

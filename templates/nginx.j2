@@ -1,0 +1,16 @@
+server {
+   listen 80;
+   listen [::]:80;
+   server_name {{ django_domain }};
+   root /var/www/{{ django_domain }};
+   location / {
+       proxy_pass http://localhost:{{ django_port }};
+       proxy_set_header Host $http_host;
+   }
+   location /static/ {
+       alias /var/cache/{{ django_project }}/static/;
+   }
+   location /media/ {
+       alias /var/opt/{{ django_project }}/media/;
+   }
+}

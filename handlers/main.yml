@@ -1,0 +1,33 @@
+---
+- name: Compile {{ django_project }}
+  command: >
+    /opt/{{ django_project }}/venv/bin/python -m compileall
+    -x ^/opt/{{ django_project }}/venv/ /opt/{{ django_project }}
+    /etc/opt/{{ django_project }}
+
+- name: Collect static files for {{ django_project }}
+  environment:
+    PYTHONPATH: /etc/opt/{{ django_project }}
+    DJANGO_SETTINGS_MODULE: settings
+  command: >
+    /opt/{{ django_project }}/venv/bin/python
+    manage.py collectstatic --noinput
+  args:
+    chdir: /opt/{{ django_project }}
+
+- name: Migrate {{ django_project }}
+  environment:
+    PYTHONPATH: /etc/opt/{{ django_project }}
+    DJANGO_SETTINGS_MODULE: settings
+  become: "{{ django_user }}"
+  command: >
+    /opt/{{ django_project }}/venv/bin/python
+    manage.py migrate
+  args:
+    chdir: /opt/{{ django_project }}
+
+- name: Reload nginx for {{ django_project }}
+  service: name=nginx state=reloaded
+
+- name: Restart {{ django_project }}
+  service: name={{ django_project }} state=restarted

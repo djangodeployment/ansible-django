@@ -1,0 +1,16 @@
+[Unit]
+Description={{ django_project }}
+
+[Service]
+User={{ django_user }}
+Group={{ django_user }}
+WorkingDirectory=/opt/{{ django_project }}
+Environment="PYTHONPATH=/etc/opt/{{ django_project }}"
+Environment="DJANGO_SETTINGS_MODULE=settings"
+ExecStart=/opt/{{ django_project }}/venv/bin/gunicorn \
+  --workers={{ gunicorn_workers }} --bind=127.0.0.1:{{ django_port }} \
+  --log-file=/var/log/{{ django_project }}/gunicorn.log \
+  {{ django_project }}.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
