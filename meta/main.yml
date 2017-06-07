@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: Antonis Christofides
+  description: Ansible role for deploying Django
+  license: GPLv3
+  min_ansible_version: 2.3
+  platforms:
+  - name: Debian
+    versions:
+    - jessie
+    - stretch
+  - name: Ubuntu
+    versions:
+    - xenial
+
+dependencies: []
